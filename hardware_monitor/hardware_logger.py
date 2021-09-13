@@ -74,7 +74,7 @@ class HardwareLogger():
             names = d["fans"].keys()
             for name in names:
                 for entry in d["fans"][name]:
-                    line = f"{line}{entry.current:<20}|"
+                    line = f"{line}{entry.current:<28}|"
         if "battery_charge" in d:
             line = f"{line}{d['battery_charge']:<19}|"
 
