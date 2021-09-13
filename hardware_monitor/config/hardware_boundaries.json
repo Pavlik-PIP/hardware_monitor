@@ -1,0 +1,6 @@
+{
+    "max_cpu_usage":      90,
+    "max_ram_usage":      80,
+    "max_temp":           80,
+    "min_battery_charge": 20
+}
