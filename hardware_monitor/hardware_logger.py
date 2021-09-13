@@ -10,7 +10,7 @@ class HardwareLogger():
     STR_DATETIME_FT = "%Y-%m-%d %H:%M:%S"
 
     def __init__(self, interval, config):
-        self.repeated_timer = RepeatedTimer(interval, self._write)
+        self.repeated_timer = RepeatedTimer(interval, self._run)
 
         if platform.system() == "Windows":
             self.hardware_info = WinHardwareInfo(config)
@@ -19,10 +19,7 @@ class HardwareLogger():
 
         self.current_date = None
         self.is_running = False
-
         self.log_dir = "logs"
-        if not os.path.isdir(self.log_dir):
-            os.makedirs(self.log_dir)
 
         header = f"{'Time':<20}|{'CPU usage [%]':<18}|{'RAM usage [%]':<18}|"
         d = self.hardware_info.get_info()
@@ -52,7 +49,14 @@ class HardwareLogger():
         self.repeated_timer.stop()
         self.is_running = False
 
-    def _write(self):
+    def _run(self):
+        self._setup_current_log()
+        self._write()
+
+    def _setup_current_log(self):
+        if not os.path.isdir(self.log_dir):
+            os.makedirs(self.log_dir)
+
         current_date = datetime.date.today()
         if self.current_date != current_date:
             self.current_date = current_date
@@ -62,6 +66,7 @@ class HardwareLogger():
             with open(self.log_path, 'w', encoding='utf-8') as f:
                 f.write(f"{self.header}{os.linesep}")
 
+    def _write(self):
         d = self.hardware_info.get_validated_info()
         current_datetime = datetime.datetime.now().strftime(self.STR_DATETIME_FT)
         line = f"{current_datetime:<20}|{d['cpu_usage']:<18}|{d['ram_usage']:<18}|"
@@ -80,3 +85,4 @@ class HardwareLogger():
 
         with open(self.log_path, 'a', encoding='utf-8') as f:
             f.write(f"{line}{os.linesep}")
+
