@@ -23,7 +23,7 @@ fans = {
 battery_charge = 50
 
 @pytest.fixture
-def mock_psutil(monkeypatch):
+def mock_psutil(monkeypatch, request):
     def mock_cpu_percent():
         return cpu_usage
     def mock_virtual_memory():
@@ -31,34 +31,13 @@ def mock_psutil(monkeypatch):
         r = svmem(percent=ram_usage)
         return r
     def mock_sensors_temperatures():
-        return temps
+        return temps if request.param == 0 else {}
     def mock_sensors_fans():
-        return fans
+        return fans if request.param == 0 else {}
     def mock_sensors_battery():
         sbattery = namedtuple('sbattery', ['percent'])
         b = sbattery(percent=battery_charge)
-        return b
-
-    monkeypatch.setattr(psutil, "cpu_percent", mock_cpu_percent)
-    monkeypatch.setattr(psutil, "virtual_memory", mock_virtual_memory)
-    monkeypatch.setattr(psutil, "sensors_temperatures", mock_sensors_temperatures)
-    monkeypatch.setattr(psutil, "sensors_fans", mock_sensors_fans)
-    monkeypatch.setattr(psutil, "sensors_battery", mock_sensors_battery)
-
-@pytest.fixture
-def mock_psutil_some_empty(monkeypatch):
-    def mock_cpu_percent():
-        return cpu_usage
-    def mock_virtual_memory():
-        svmem = namedtuple('svmem', ['percent'])
-        r = svmem(percent=ram_usage)
-        return r
-    def mock_sensors_temperatures():
-        return {}
-    def mock_sensors_fans():
-        return {}
-    def mock_sensors_battery():
-        return None
+        return b if request.param == 0 else None
 
     monkeypatch.setattr(psutil, "cpu_percent", mock_cpu_percent)
     monkeypatch.setattr(psutil, "virtual_memory", mock_virtual_memory)
@@ -92,26 +71,24 @@ def create_critical_config(tmp_path):
     config.write_text(content)
     return config
 
-def test_get_info(mock_psutil):
-    hi = LinuxHardwareInfo()
-    d = hi.get_info()
-
-    assert d["cpu_usage"] == cpu_usage
-    assert d["ram_usage"] == ram_usage
-    assert d["temps"] == temps
-    assert d["fans"] == fans
-    assert d["battery_charge"] == battery_charge
-
-def test_get_info_some_empty(mock_psutil_some_empty):
+@pytest.mark.parametrize("mock_psutil, variant", [(0, 0), (1, 1)],
+                         ids=["full", "some_empty"], indirect=["mock_psutil"])
+def test_get_info(mock_psutil, variant):
     hi = LinuxHardwareInfo()
     d = hi.get_info()
     
     assert d["cpu_usage"] == cpu_usage
     assert d["ram_usage"] == ram_usage
-    assert "temps" not in d
-    assert "fans" not in d
-    assert "battery_charge" not in d
+    if variant == 0:
+        assert d["temps"] == temps
+        assert d["fans"] == fans
+        assert d["battery_charge"] == battery_charge
+    else:
+        assert "temps" not in d
+        assert "fans" not in d
+        assert "battery_charge" not in d
 
+@pytest.mark.parametrize("mock_psutil", [0], ids=["full"], indirect=True)
 def test_get_validated_info_not_critical(mock_psutil, create_not_critical_config):
     hi = LinuxHardwareInfo(create_not_critical_config)
     d = hi.get_validated_info()
@@ -122,6 +99,7 @@ def test_get_validated_info_not_critical(mock_psutil, create_not_critical_config
     assert d["fans"] == fans
     assert d["battery_charge"] == battery_charge
 
+@pytest.mark.parametrize("mock_psutil", [0], ids=["full"], indirect=True)
 def test_get_validated_info_critical(mock_psutil, create_critical_config):
     hi = LinuxHardwareInfo(create_critical_config)
     d = hi.get_validated_info()
