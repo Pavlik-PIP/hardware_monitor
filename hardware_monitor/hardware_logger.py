@@ -9,7 +9,7 @@ class HardwareLogger():
     STR_DATE_FT = "%Y-%m-%d"
     STR_DATETIME_FT = "%Y-%m-%d %H:%M:%S"
 
-    def __init__(self, interval, config):
+    def __init__(self, interval, config, log_dir=None):
         self.repeated_timer = RepeatedTimer(interval, self._run)
 
         if platform.system() == "Windows":
@@ -19,7 +19,7 @@ class HardwareLogger():
 
         self.current_date = None
         self.is_running = False
-        self.log_dir = "logs"
+        self.log_dir = log_dir if log_dir else "logs"
 
         header = f"{'Time':<20}|{'CPU usage [%]':<18}|{'RAM usage [%]':<18}|"
         d = self.hardware_info.get_info()
@@ -27,13 +27,13 @@ class HardwareLogger():
             names = d["temps"].keys()
             for name in names:
                 for entry in d["temps"][name]:
-                    temp_name = f"{name} {entry.label or None} temp [\u00B0C]"
+                    temp_name = f"{name} {entry['label'].ljust()}temp [\u00B0C]"
                     header = f"{header}{temp_name:<20}|"
         if "fans" in d:
             names = d["fans"].keys()
             for name in names:
                 for entry in d["fans"][name]:
-                    fan_name = f"{name} {entry.label or None} fan speed [RPM]"
+                    fan_name = f"{name} {entry['label'].ljust()}fan speed [RPM]"
                     header = f"{header}{fan_name:<28}|"
         if "battery_charge" in d:
             header = f"{header}{'Battery charge [%]':<19}|"
