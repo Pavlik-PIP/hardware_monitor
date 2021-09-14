@@ -1,4 +1,5 @@
 from hardware_monitor.hardware_info import LinuxHardwareInfo
+from hardware_monitor.utils import sensors_dict_to_usual_dict
 
 import psutil
 from psutil._common import shwtemp, sfan
@@ -80,8 +81,8 @@ def test_get_info(mock_psutil, variant):
     assert d["cpu_usage"] == cpu_usage
     assert d["ram_usage"] == ram_usage
     if variant == 0:
-        assert d["temps"] == temps
-        assert d["fans"] == fans
+        assert d["temps"] == sensors_dict_to_usual_dict(temps)
+        assert d["fans"] == sensors_dict_to_usual_dict(fans)
         assert d["battery_charge"] == battery_charge
     else:
         assert "temps" not in d
@@ -95,8 +96,8 @@ def test_get_validated_info_not_critical(mock_psutil, create_not_critical_config
     
     assert d["cpu_usage"] == cpu_usage
     assert d["ram_usage"] == ram_usage
-    assert d["temps"] == temps
-    assert d["fans"] == fans
+    assert d["temps"] == sensors_dict_to_usual_dict(temps)
+    assert d["fans"] == sensors_dict_to_usual_dict(fans)
     assert d["battery_charge"] == battery_charge
 
 @pytest.mark.parametrize("mock_psutil", [0], ids=["full"], indirect=True)
@@ -106,6 +107,11 @@ def test_get_validated_info_critical(mock_psutil, create_critical_config):
     
     assert d["cpu_usage"] == f"{cpu_usage} (overload!)"
     assert d["ram_usage"] == f"{ram_usage} (overload!)"
-    assert d["temps"] == temps
-    assert d["fans"] == fans
-    assert d["battery_charge"] == battery_charge
+    tmp_temps = sensors_dict_to_usual_dict(temps)
+    names = tmp_temps.keys()
+    for name in names:
+        for entry in tmp_temps[name]:
+                entry["current"] = f"{entry['current']} (overheat!)"
+    assert d["temps"] == tmp_temps
+    assert d["fans"] == sensors_dict_to_usual_dict(fans)
+    assert d["battery_charge"] == f"{battery_charge} (too low!)"

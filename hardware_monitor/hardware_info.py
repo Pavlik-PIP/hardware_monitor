@@ -1,3 +1,5 @@
+from .utils import sensors_dict_to_usual_dict
+
 import psutil
 
 import json
@@ -35,9 +37,9 @@ class LinuxHardwareInfo(HardwareInfo):
 
         d = {"cpu_usage": cpu_usage, "ram_usage": ram_usage}
         if temps:
-            d["temps"] = temps
+            d["temps"] = sensors_dict_to_usual_dict(temps)
         if fans:
-            d["fans"] = fans
+            d["fans"] = sensors_dict_to_usual_dict(fans)
         if battery_charge:
             d["battery_charge"] = battery_charge
 
@@ -55,8 +57,8 @@ class LinuxHardwareInfo(HardwareInfo):
                 names = d["temps"].keys()
                 for name in names:
                     for entry in d["temps"][name]:
-                        if entry.current > self.max_temp:
-                            entry.current = f"{entry.current} (overheat!)"
+                        if entry["current"] > self.max_temp:
+                            entry["current"] = f"{entry['current']} (overheat!)"
 
             if "battery_charge" in d:
                 if d["battery_charge"] < self.min_battery_charge:
