@@ -19,7 +19,7 @@ def pytest_configure():
         'corefan': [sfan(label='Core 0', current=1600),
                     sfan(label='Core 1', current=800)]
     }
-    pytest.battery_charge = 50
+    pytest.battery_charge = 50.0
 
 @pytest.fixture
 def mock_psutil(monkeypatch, request):
@@ -45,22 +45,21 @@ def mock_psutil(monkeypatch, request):
     monkeypatch.setattr(psutil, "sensors_battery", mock_sensors_battery)
 
 @pytest.fixture
-def create_not_critical_config(tmp_path):
+def create_config(tmp_path, request):
     config = tmp_path / "config.json"
-    content = \
+    content = None
+    # if not critical
+    if request.param == 0: 
+        content = \
 """{
     "max_cpu_usage":      101,
     "max_ram_usage":      101,
     "max_temp":           101,
     "min_battery_charge": -1
 }"""
-    config.write_text(content)
-    return config
-
-@pytest.fixture
-def create_critical_config(tmp_path):
-    config = tmp_path / "config.json"
-    content = \
+    # else critical
+    else:
+        content = \
 """{
     "max_cpu_usage":      -1,
     "max_ram_usage":      -1,

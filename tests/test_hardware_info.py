@@ -20,29 +20,28 @@ def test_get_info(mock_psutil, variant):
         assert "fans" not in d
         assert "battery_charge" not in d
 
+@pytest.mark.parametrize("create_config, config_variant", [(0, 0), (1, 1)],
+                         ids=["not_critical", "critical"], indirect=["create_config"])
 @pytest.mark.parametrize("mock_psutil", [0], ids=["full"], indirect=True)
-def test_get_validated_info_not_critical(mock_psutil, create_not_critical_config):
-    hi = LinuxHardwareInfo(create_not_critical_config)
+def test_get_validated_info_not_critical(mock_psutil, create_config, config_variant):
+    hi = LinuxHardwareInfo(create_config)
     d = hi.get_validated_info()
     
-    assert d["cpu_usage"] == pytest.cpu_usage
-    assert d["ram_usage"] == pytest.ram_usage
-    assert d["temps"] == sensors_dict_to_usual_dict(pytest.temps)
-    assert d["fans"] == sensors_dict_to_usual_dict(pytest.fans)
-    assert d["battery_charge"] == pytest.battery_charge
+    if config_variant == 0:
+        assert d["cpu_usage"] == pytest.cpu_usage
+        assert d["ram_usage"] == pytest.ram_usage
+        assert d["temps"] == sensors_dict_to_usual_dict(pytest.temps)
+        assert d["fans"] == sensors_dict_to_usual_dict(pytest.fans)
+        assert d["battery_charge"] == pytest.battery_charge
+    else:
+        assert d["cpu_usage"] == f"{pytest.cpu_usage} (overload!)"
+        assert d["ram_usage"] == f"{pytest.ram_usage} (overload!)"
+        tmp_temps = sensors_dict_to_usual_dict(pytest.temps)
+        names = tmp_temps.keys()
+        for name in names:
+            for entry in tmp_temps[name]:
+                    entry["current"] = f"{entry['current']} (overheat!)"
+        assert d["temps"] == tmp_temps
+        assert d["fans"] == sensors_dict_to_usual_dict(pytest.fans)
+        assert d["battery_charge"] == f"{pytest.battery_charge} (too low!)"
 
-@pytest.mark.parametrize("mock_psutil", [0], ids=["full"], indirect=True)
-def test_get_validated_info_critical(mock_psutil, create_critical_config):
-    hi = LinuxHardwareInfo(create_critical_config)
-    d = hi.get_validated_info()
-    
-    assert d["cpu_usage"] == f"{pytest.cpu_usage} (overload!)"
-    assert d["ram_usage"] == f"{pytest.ram_usage} (overload!)"
-    tmp_temps = sensors_dict_to_usual_dict(pytest.temps)
-    names = tmp_temps.keys()
-    for name in names:
-        for entry in tmp_temps[name]:
-                entry["current"] = f"{entry['current']} (overheat!)"
-    assert d["temps"] == tmp_temps
-    assert d["fans"] == sensors_dict_to_usual_dict(pytest.fans)
-    assert d["battery_charge"] == f"{pytest.battery_charge} (too low!)"

@@ -24,17 +24,20 @@ class HardwareLogger():
         header = f"{'Time':<20}|{'CPU usage [%]':<18}|{'RAM usage [%]':<18}|"
         d = self.hardware_info.get_info()
         if "temps" in d:
+            grad = "[\u00B0C]"
             names = d["temps"].keys()
             for name in names:
                 for entry in d["temps"][name]:
-                    temp_name = f"{name} {entry['label'].ljust()}temp [\u00B0C]"
-                    header = f"{header}{temp_name:<20}|"
+                    label = f" {entry['label']} " if entry['label'] else " "
+                    temp_name = f"{name}{label}temp {grad}"
+                    header = f"{header}{temp_name:<25}|"
         if "fans" in d:
             names = d["fans"].keys()
             for name in names:
                 for entry in d["fans"][name]:
-                    fan_name = f"{name} {entry['label'].ljust()}fan speed [RPM]"
-                    header = f"{header}{fan_name:<28}|"
+                    label = f" {entry['label']} " if entry['label'] else " "
+                    fan_name = f"{name}{label}fan speed [RPM]"
+                    header = f"{header}{fan_name:<30}|"
         if "battery_charge" in d:
             header = f"{header}{'Battery charge [%]':<19}|"
 
@@ -74,12 +77,12 @@ class HardwareLogger():
             names = d["temps"].keys()
             for name in names:
                 for entry in d["temps"][name]:
-                    line = f"{line}{entry.current:<20}|"
+                    line = f"{line}{entry['current']:<25}|"
         if "fans" in d:
             names = d["fans"].keys()
             for name in names:
                 for entry in d["fans"][name]:
-                    line = f"{line}{entry.current:<28}|"
+                    line = f"{line}{entry['current']:<30}|"
         if "battery_charge" in d:
             line = f"{line}{d['battery_charge']:<19}|"
 
