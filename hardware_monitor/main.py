@@ -26,8 +26,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Log system info at "
             "specified interval", epilog=choices_description,
-            formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("interval", metavar="interval", nargs='?',
+            formatter_class=argparse.RawTextHelpFormatter,
+            usage="python -m hardware_monitor [-h] [T]")
+    parser.add_argument("interval", metavar="T", nargs='?',
                         choices=["m10", "hour", "day"], default="m10",
                         help="interval of time (default: %(default)s)")
 
@@ -36,8 +37,9 @@ def main():
     interval = Interval[args.interval.upper()]
     config = os.path.join(os.path.realpath(__package__), "config",
                           "hardware_boundaries.json")
-    
-    logger = HardwareLogger(interval, config)
+    home = os.path.expanduser("~")
+    log_dir = os.path.join(home, "hardware_monitor/logs")
+    logger = HardwareLogger(interval, config, log_dir)
     logger.start()
 
     try:

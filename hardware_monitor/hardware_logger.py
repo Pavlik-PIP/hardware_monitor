@@ -19,7 +19,11 @@ class HardwareLogger():
 
         self.current_date = None
         self.is_running = False
-        self.log_dir = log_dir if log_dir else "logs"
+        if log_dir:
+            self.log_dir = log_dir
+        else:
+            home = os.path.expanduser("~")
+            self.log_dir = os.path.join(home, "hardware_monitor/logs")
 
         header = f"{'Time':<20}|{'CPU usage [%]':<18}|{'RAM usage [%]':<18}|"
         d = self.hardware_info.get_info()
