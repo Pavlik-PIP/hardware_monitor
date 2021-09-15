@@ -37,7 +37,7 @@ def main():
     config = os.path.join(os.path.realpath(__package__), "config",
                           "hardware_boundaries.json")
     
-    logger = HardwareLogger(1, config)
+    logger = HardwareLogger(interval, config)
     logger.start()
 
     try:
