@@ -119,7 +119,6 @@ def test_hardware_logger_hour(mock_repeated_timer, mock_psutil, create_config,
                          ids=["critical", "not_critical"], indirect=["create_config"])
 @pytest.mark.parametrize("mock_psutil, psutil_variant", [(0, 0), (1, 1)],
                          ids=["full", "some_empty"], indirect=["mock_psutil"])
-@freeze_time("2021-01-20 00:00:00", auto_tick_seconds=float(Interval.DAY) * 0.4)
 def test_hardware_logger_day(mock_repeated_timer, mock_psutil, create_config,
                              tmpdir, psutil_variant, config_variant):
     l = HardwareLogger(Interval.DAY, create_config, tmpdir)
