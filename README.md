@@ -1,4 +1,4 @@
-# Test task
+# hardware_monitor (Test task for V4Scale)
 
 ## Run
 
